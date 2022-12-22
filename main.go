@@ -1,8 +1,6 @@
 package main
 
 import (
-	"database/sql"
-	"fmt"
 	"github/crud-postgres/router"
 	"log"
 	"net/http"

@@ -108,10 +108,10 @@ func PutByIdLanguage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//Sql Insert
-	newLanguage, err := PutByIdLanguage_sql(id, lang)
+	idRowsEffected := PutByIdLanguage_sql(id, lang)
 
 	res := response{
-		Id:      newLanguage,
+		Id:      idRowsEffected,
 		Message: "Change old language",
 	}
 	err = json.NewEncoder(w).Encode(res)
@@ -128,10 +128,10 @@ func DeleteByIdLanguage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//Sql Insert
-	newLanguage, err := DeleteByIdLanguage_sql(id)
+	idRowsEffected := DeleteByIdLanguage_sql(id)
 
 	res := response{
-		Id:      newLanguage,
+		Id:      idRowsEffected,
 		Message: "Delte language",
 	}
 	err = json.NewEncoder(w).Encode(res)
@@ -143,7 +143,23 @@ func DeleteByIdLanguage(w http.ResponseWriter, r *http.Request) {
 func GetAllLangage_sql() ([]models.Language, error) {
 	db := createConnection()
 	defer db.Close()
+	var langs []models.Language
+	query := `Select * from LANGUAGES`
+	rows, err := db.Query(query)
+	if err != nil {
+		log.Println("Unable to execute query GetAllLangage_sql")
+	}
+	defer rows.Close()
 
+	for rows.Next() {
+		var temp models.Language
+		err = rows.Scan(&temp.Id, &temp.Year, &temp.Name, &temp.Developer)
+		if err != nil {
+			log.Printf("Unable to scan")
+		}
+		langs = append(langs, temp)
+	}
+	return langs, nil
 }
 
 func GetByIdLanguage_sql(id int) (models.Language, error) {
@@ -153,11 +169,15 @@ func GetByIdLanguage_sql(id int) (models.Language, error) {
 	query := `Select * from LANGUAGES WHERE id=$1`
 	row := db.QueryRow(query, id)
 	err := row.Scan(&lang.Id, &lang.Year, &lang.Name, &lang.Developer)
-	if err != nil {
+	if err == sql.ErrNoRows {
+		log.Printf("No rows with such id")
+		return lang, nil
+	} else if err != nil {
+		return lang, nil
+	} else {
 		log.Println("Unable to execute query GetByIdLanguage_sql")
+		return lang, err
 	}
-	return lang, err
-
 }
 
 func PostLanguage_sql(lang models.Language) (int, error) {
@@ -170,16 +190,35 @@ func PostLanguage_sql(lang models.Language) (int, error) {
 	if err != nil {
 		log.Println("Unable to execute query PostLanguage_sql")
 	}
+	return id, err
 }
 
-func PutByIdLanguage_sql(id int, lang models.Language) (int, error) {
+func PutByIdLanguage_sql(id int, lang models.Language) int {
 	db := createConnection()
 	defer db.Close()
-
+	query := `UPDATE LANGUAGES SET Year = $1 Name = $2 Developer = $3 WHere Id = %4`
+	res, err := db.Exec(query, lang.Year, lang.Name, lang.Developer, lang.Id)
+	if err != nil {
+		log.Println("Unable to execute query PutByIdLanguage_sql")
+	}
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		log.Printf("Unable to execute query RowsAffected PutByIdLanguage_sql")
+	}
+	return int(rowsAffected)
 }
 
-func DeleteByIdLanguage_sql(id int) (int, error) {
+func DeleteByIdLanguage_sql(id int) int {
 	db := createConnection()
 	defer db.Close()
-
+	query := `DELETE FROM LANGUAGES WHERE id = %1`
+	res, err := db.Exec(query, id)
+	if err != nil {
+		log.Printf("Unable to execute query DeleteByIdLanguage_sql")
+	}
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		log.Printf("Unable to execute query RowsAffected PutByIdLanguage_sql")
+	}
+	return int(rowsAffected)
 }
