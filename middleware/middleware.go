@@ -50,7 +50,7 @@ func GetAllLanguage(w http.ResponseWriter, r *http.Request) {
 
 	err = json.NewEncoder(w).Encode(allLanguage)
 	if err != nil {
-		log.Println("Error in encoding in getAlllanguage")
+		log.Println("Error in encoding in GetAllLanguage")
 	}
 }
 
@@ -59,7 +59,7 @@ func GetByIdLanguage(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	id, err := strconv.Atoi(params["id"])
 	if err != nil {
-		log.Println("Unable to convert string to int")
+		log.Println("Unable to convert string to int GetByIdLanguage")
 	}
 
 	//Sql Select
@@ -67,7 +67,7 @@ func GetByIdLanguage(w http.ResponseWriter, r *http.Request) {
 
 	err = json.NewEncoder(w).Encode(Language)
 	if err != nil {
-		log.Println("Error in encoding in getAlllanguage")
+		log.Println("Error in encoding in GetByIdLanguage")
 	}
 }
 
@@ -76,7 +76,7 @@ func PostLanguage(w http.ResponseWriter, r *http.Request) {
 
 	err := json.NewDecoder(r.Body).Decode(&lang)
 	if err != nil {
-		log.Println("Error in decoding in getAllLanguage")
+		log.Println("Error in decoding in PostLanguage")
 	}
 
 	//Sql Insert
@@ -88,7 +88,7 @@ func PostLanguage(w http.ResponseWriter, r *http.Request) {
 	}
 	err = json.NewEncoder(w).Encode(res)
 	if err != nil {
-		log.Println("Error in encoding in getAlllanguage")
+		log.Println("Error in encoding in PostLanguage")
 	}
 }
 
@@ -99,12 +99,12 @@ func PutByIdLanguage(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.Atoi(params["id"])
 
 	if err != nil {
-		log.Println("Unable to convert string to int")
+		log.Println("Unable to convert string to int PutByIdLanguage")
 	}
 
 	err = json.NewDecoder(r.Body).Decode(&lang)
 	if err != nil {
-		log.Println("Error in decoding in getAllLanguage")
+		log.Println("Error in decoding in PutByIdLanguage")
 	}
 
 	//Sql Insert
@@ -116,7 +116,7 @@ func PutByIdLanguage(w http.ResponseWriter, r *http.Request) {
 	}
 	err = json.NewEncoder(w).Encode(res)
 	if err != nil {
-		log.Println("Error in encoding in getAlllanguage")
+		log.Println("Error in encoding in PutByIdLanguage")
 	}
 }
 
@@ -124,7 +124,7 @@ func DeleteByIdLanguage(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	id, err := strconv.Atoi(params["id"])
 	if err != nil {
-		log.Println("Unable to convert string to int")
+		log.Println("Unable to convert string to int DeleteByIdLanguage")
 	}
 
 	//Sql Insert
@@ -136,7 +136,7 @@ func DeleteByIdLanguage(w http.ResponseWriter, r *http.Request) {
 	}
 	err = json.NewEncoder(w).Encode(res)
 	if err != nil {
-		log.Println("Error in encoding in getAlllanguage")
+		log.Println("Error in encoding in DeleteByIdLanguage")
 	}
 }
 
@@ -155,7 +155,7 @@ func GetAllLangage_sql() ([]models.Language, error) {
 		var temp models.Language
 		err = rows.Scan(&temp.Id, &temp.Year, &temp.Name, &temp.Developer)
 		if err != nil {
-			log.Printf("Unable to scan")
+			log.Printf("Unable to scan GetAllLangage_sql")
 		}
 		langs = append(langs, temp)
 	}
@@ -170,7 +170,7 @@ func GetByIdLanguage_sql(id int) (models.Language, error) {
 	row := db.QueryRow(query, id)
 	err := row.Scan(&lang.Id, &lang.Year, &lang.Name, &lang.Developer)
 	if err == sql.ErrNoRows {
-		log.Printf("No rows with such id")
+		log.Printf("No rows with such id GetByIdLanguage_sql")
 		return lang, nil
 	} else if err != nil {
 		return lang, nil
@@ -184,9 +184,9 @@ func PostLanguage_sql(lang models.Language) (int, error) {
 	db := createConnection()
 	defer db.Close()
 
-	query := `INSERT INTO LANGUAGES (id, year, name, developer) VALUES ($1, $2, $3, $4) RETURNING id`
+	query := `INSERT INTO LANGUAGES (id, lyear, Lname, developer) VALUES ($1, $2, $3, $4) RETURNING id`
 	var id int
-	err := db.QueryRow(query, lang).Scan(&id)
+	err := db.QueryRow(query, lang.Id, lang.Year, lang.Name, lang.Developer).Scan(&id)
 	if err != nil {
 		log.Println("Unable to execute query PostLanguage_sql")
 	}
@@ -196,8 +196,8 @@ func PostLanguage_sql(lang models.Language) (int, error) {
 func PutByIdLanguage_sql(id int, lang models.Language) int {
 	db := createConnection()
 	defer db.Close()
-	query := `UPDATE LANGUAGES SET Year = $1 Name = $2 Developer = $3 WHere Id = %4`
-	res, err := db.Exec(query, lang.Year, lang.Name, lang.Developer, lang.Id)
+	query := `UPDATE LANGUAGES SET lyear = $1, Lname = $2, developer = $3 WHere id = $4`
+	res, err := db.Exec(query, lang.Year, lang.Name, lang.Developer, id)
 	if err != nil {
 		log.Println("Unable to execute query PutByIdLanguage_sql")
 	}
@@ -211,7 +211,7 @@ func PutByIdLanguage_sql(id int, lang models.Language) int {
 func DeleteByIdLanguage_sql(id int) int {
 	db := createConnection()
 	defer db.Close()
-	query := `DELETE FROM LANGUAGES WHERE id = %1`
+	query := `DELETE FROM LANGUAGES WHERE id = $1`
 	res, err := db.Exec(query, id)
 	if err != nil {
 		log.Printf("Unable to execute query DeleteByIdLanguage_sql")
